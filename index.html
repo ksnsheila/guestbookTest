@@ -93,20 +93,19 @@
             const messageInput = document.getElementById('message');
             const submitBtn = document.getElementById('submit-btn');
 
-            // 💡 統一格式化日期 (YYYY-MM-DD HH:mm)，不管用 PC 還是 iPhone 格式都完全一致
+            // 💡 使用 getHours() (0-23) 並透過 padStart 確保永遠是 24小時制的雙位數格式
             const now = new Date();
             const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0'); // 確保是兩位數
+            const month = String(now.getMonth() + 1).padStart(2, '0');
             const day = String(now.getDate()).padStart(2, '0');
             const hours = String(now.getHours()).padStart(2, '0');     // 24小時制的小時 (00-23)
             const minutes = String(now.getMinutes()).padStart(2, '0'); // 分鐘 (00-59)
-
             const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}`;
 
             const newComment = {
                 name: nameInput.value,
                 message: messageInput.value,
-                date: formattedDate // 統一格式
+                date: formattedDate
             };
 
             submitBtn.disabled = true;

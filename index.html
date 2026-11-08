@@ -51,7 +51,7 @@
     <!-- JavaScript 邏輯 -->
     <script>
         // ⚠️ 請換成你在 SheetDB 取得的 API 網址
-        const API_URL = 'https://sheetdb.io/api/v1/mf1hi9bmb1xdu';
+        const API_URL = 'YOUR_SHEETDB_API_URL';
 
         // 1. 網頁開啟時，自動讀取所有留言
         async function fetchMessages() {
@@ -96,20 +96,22 @@
             const newComment = {
                 name: nameInput.value,
                 message: messageInput.value,
-                const now = new Date();
-                //記錄日期和時間
-                const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, '0'); // 確保是兩位數
-                const day = String(now.getDate()).padStart(2, '0');
+                date: new Date().toLocaleString() // 產生當前時間
+                cconst now = new Date();
+                cconst year = now.getFullYear();
+                cconst month = String(now.getMonth() + 1).padStart(2, '0'); // 確保是兩位數
+                cconst day = String(now.getDate()).padStart(2, '0');
                 const hours = String(now.getHours()).padStart(2, '0');
                 const minutes = String(now.getMinutes()).padStart(2, '0');
-                const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}`;
 
+                const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}`;
                 const newComment = {
-                    name: nameInput.value,
-                    message: messageInput.value,
-                    date: formattedDate // 統一格式
-                }; // 產生當前時間
+                   name: nameInput.value,
+                   message: messageInput.value,
+                   date: formattedDate // 統一格式
+                };
+
+
             };
 
             submitBtn.disabled = true;

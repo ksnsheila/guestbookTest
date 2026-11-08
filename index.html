@@ -1,89 +1,145 @@
-using System.Collections;
-using UnityEngine;
-using UnityEngine.Networking;
-using System.Collections.Generic;
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的雲端留言板</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen py-10 px-4">
 
-[System.Serializable]
-public class CommentData
-{
-    public string name;
-    public string message;
-    public string date;
-}
+    <div class="max-w-xl mx-auto space-y-8">
+        <!-- 標題 -->
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-slate-800">💬 訪客留言板</h1>
+            <p class="text-slate-500 mt-2">歡迎留下你的想法，無需登入！</p>
+        </div>
 
-[System.Serializable]
-public class CommentWrapper
-{
-    public List<CommentData> data;
-}
+        <!-- 留言表單 -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+            <form id="comment-form" onsubmit="postMessage(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">你的名字</label>
+                    <input type="text" id="name" required 
+                        class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="請輸入暱稱...">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">留言內容</label>
+                    <textarea id="message" rows="3" required 
+                        class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="說點什麼吧..."></textarea>
+                </div>
+                <button type="submit" id="submit-btn"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition">
+                    送出留言
+                </button>
+            </form>
+        </div>
 
-public class SheetDBManager : MonoBehaviour
-{
-    // ⚠️ 換成你的 SheetDB API 網址
-    private string apiUrl = "YOUR_SHEETDB_API_URL";
+        <!-- 留言列表 -->
+        <div class="space-y-4">
+            <h2 class="text-xl font-semibold text-slate-800">大家的留言</h2>
+            <div id="messages-container" class="space-y-3">
+                <!-- 留言會透過 JavaScript 動態載入這裡 -->
+                <p class="text-slate-400 text-center py-4">載入中...</p>
+            </div>
+        </div>
+    </div>
 
-    void Start()
-    {
-        StartCoroutine(GetMessages());
-    }
+    <!-- JavaScript 邏輯 -->
+    <script>
+        // ⚠️ 請換成你在 SheetDB 取得的 API 網址
+        const API_URL = 'YOUR_SHEETDB_API_URL';
 
-    // 1. 讀取留言 (GET)
-    IEnumerator GetMessages()
-    {
-        using (UnityWebRequest www = UnityWebRequest.Get(apiUrl))
-        {
-            yield return www.SendWebRequest();
+        // 1. 網頁開啟時，自動讀取所有留言
+        async function fetchMessages() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                const container = document.getElementById('messages-container');
+                
+                if (data.length === 0) {
+                    container.innerHTML = `<p class="text-slate-400 text-center py-4">目前還沒有留言，快來搶頭香吧！</p>`;
+                    return;
+                }
 
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                string jsonResult = www.downloadHandler.text;
-                // SheetDB 回傳的通常是陣列，可以用 JsonUtility 處理
-                // (註：如果回傳是頂層陣列，Unity 內建 JsonUtility 需包一層 Wrapper 處理)
-                Debug.Log("成功取得留言: " + jsonResult);
-            }
-            else
-            {
-                Debug.LogError("讀取失敗: " + www.error);
+                // 清空並反轉陣列（讓最新的留言顯示在最上方）
+                container.innerHTML = '';
+                data.reverse().forEach(row => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-white p-4 rounded-xl shadow-sm border border-slate-100 space-y-1';
+                    card.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold text-slate-800">${escapeHtml(row.name)}</span>
+                            <span class="text-xs text-slate-400">${escapeHtml(row.date || '')}</span>
+                        </div>
+                        <p class="text-slate-600 text-sm whitespace-pre-wrap">${escapeHtml(row.message)}</p>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                console.error('讀取失敗:', error);
+                document.getElementById('messages-container').innerHTML = `<p class="text-red-400 text-center py-4">載入留言失敗，請稍後再試。</p>`;
             }
         }
-    }
 
-    // 2. 發送留言 (POST)
-    public void SendMessageToSheet(string playerName, string playerMessage)
-    {
-        StartCoroutine(PostCoroutine(playerName, playerMessage));
-    }
+        // 2. 處理表單送出
+        async function postMessage(event) {
+            event.preventDefault(); // 防止頁面重新整理
 
-    IEnumerator PostCoroutine(string name, string message)
-    {
-        // 建立要上傳的資料結構
-        CommentData newComment = new CommentData {
-            name = name,
-            message = message,
-            date = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm")
-        };
+            const nameInput = document.getElementById('name');
+            const messageInput = document.getElementById('message');
+            const submitBtn = document.getElementById('submit-btn');
 
-        // SheetDB POST 格式要求需要包在 {"data": [...]} 裡面
-        string jsonBody = "{\"data\":[" + JsonUtility.ToJson(newComment) + "]}";
+            const newComment = {
+                name: nameInput.value,
+                message: messageInput.value,
+                date: new Date().toLocaleString() // 產生當前時間
+            };
 
-        using (UnityWebRequest www = new UnityWebRequest(apiUrl, "POST"))
-        {
-            byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonBody);
-            www.uploadHandler = new UploadHandlerRaw(bodyRaw);
-            www.downloadHandler = new DownloadHandlerBuffer();
-            www.SetRequestHeader("Content-Type", "application/json");
+            submitBtn.disabled = true;
+            submitBtn.textContent = '傳送中...';
 
-            yield return www.SendWebRequest();
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ data: [newComment] })
+                });
 
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                Debug.Log("留言成功送出！");
-                StartCoroutine(GetMessages()); // 重新整理列表
-            }
-            else
-            {
-                Debug.LogError("送出失敗: " + www.error);
+                if (response.ok) {
+                    nameInput.value = '';
+                    messageInput.value = '';
+                    fetchMessages(); // 重新整理留言列表
+                } else {
+                    alert('送出失敗，請稍後再試。');
+                }
+            } catch (error) {
+                console.error('送出錯誤:', error);
+                alert('發生錯誤，請檢查網路連線。');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '送出留言';
             }
         }
-    }
-}
+
+        // 簡單的安全防護（避免 HTML 標籤被惡意執行）
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;")
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;")
+                      .replace(/"/g, "&quot;")
+                      .replace(/'/g, "&#039;");
+        }
+
+        // 初始化執行
+        fetchMessages();
+    </script>
+</body>
+</html>

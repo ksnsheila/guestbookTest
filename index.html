@@ -12,7 +12,7 @@
     <div class="max-w-xl mx-auto space-y-8">
         <!-- 標題 -->
         <div class="text-center">
-            <h1 class="text-3xl font-bold text-slate-800">💬 訪客留言板 (2)</h1>
+            <h1 class="text-3xl font-bold text-slate-800">💬 訪客留言板</h1>
             <p class="text-slate-500 mt-2">歡迎留下你的想法，無需登入！</p>
         </div>
 
@@ -93,10 +93,20 @@
             const messageInput = document.getElementById('message');
             const submitBtn = document.getElementById('submit-btn');
 
+            // 💡 統一格式化日期 (YYYY-MM-DD HH:mm)，不管用 PC 還是 iPhone 格式都完全一致
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0'); // 確保是兩位數
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+
+            const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}`;
+
             const newComment = {
                 name: nameInput.value,
                 message: messageInput.value,
-                date: new Date().toLocaleString() // 產生當前時間
+                date: formattedDate // 統一格式
             };
 
             submitBtn.disabled = true;

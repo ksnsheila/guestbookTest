@@ -98,8 +98,8 @@
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0'); // 確保是兩位數
             const day = String(now.getDate()).padStart(2, '0');
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');     // 24小時制的小時 (00-23)
+            const minutes = String(now.getMinutes()).padStart(2, '0'); // 分鐘 (00-59)
 
             const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}`;
 

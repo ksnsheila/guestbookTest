@@ -3,521 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>互動網頁留言板</title>
+    <title>我的雲端留言板</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome 圖標 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Inter 字體 -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'Microsoft JhengHei', 'sans-serif'],
-                    },
-                    colors: {
-                        brand: {
-                            50: '#f0f9ff',
-                            100: '#e0f2fe',
-                            500: '#0284c7',
-                            600: '#0369a1',
-                            700: '#075985',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        .fade-in {
-            animation: fadeIn 0.3s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col selection:bg-brand-500 selection:text-white">
+<body class="bg-slate-50 min-h-screen py-10 px-4">
 
-    <!-- 頂部導覽列 -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <div class="bg-brand-500 text-white p-2.5 rounded-xl shadow-md shadow-brand-500/20">
-                    <i class="fa-solid me-0 fa-comments text-xl"></i>
+    <div class="max-w-xl mx-auto space-y-8">
+        <!-- 標題 -->
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-slate-800">💬 訪客留言板</h1>
+            <p class="text-slate-500 mt-2">歡迎留下你的想法，無需登入！</p>
+        </div>
+
+        <!-- 留言表單 -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+            <form id="comment-form" onsubmit="postMessage(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">你的名字</label>
+                    <input type="text" id="name" required 
+                        class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="請輸入暱稱...">
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold text-slate-900 tracking-tight">社群留言板</h1>
-                    <p class="text-xs text-slate-500">歡迎分享您的想法與建議</p>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">留言內容</label>
+                    <textarea id="message" rows="3" required 
+                        class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="說點什麼吧..."></textarea>
                 </div>
-            </div>
-
-            <!-- 管理員模式按鈕 -->
-            <button id="adminToggleBtn" onclick="toggleAdminModal()" class="flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 border border-slate-200 hover:bg-slate-100 text-slate-700">
-                <i class="fa-solid fa-user-shield text-slate-500" id="adminBtnIcon"></i>
-                <span id="adminBtnText">管理員登入</span>
-            </button>
-        </div>
-    </header>
-
-    <!-- 主要內容區塊 -->
-    <main class="max-w-4xl mx-auto px-4 sm:px-6 py-8 flex-grow w-full">
-
-        <!-- 管理員啟用狀態提示條 -->
-        <div id="adminBanner" class="hidden mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 flex justify-between items-center fade-in shadow-sm">
-            <div class="flex items-center gap-3">
-                <i class="fa-solid fa-shield-halved text-amber-600 text-lg"></i>
-                <div>
-                    <span class="font-bold">目前處於管理員模式</span>
-                    <span class="text-xs block text-amber-700">您可以刪除任何不當留言</span>
-                </div>
-            </div>
-            <button onclick="logoutAdmin()" class="text-xs bg-amber-200 hover:bg-amber-300 text-amber-900 px-3 py-1.5 rounded-md font-medium transition">
-                退出管理員
-            </button>
+                <button type="submit" id="submit-btn"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition">
+                    送出留言
+                </button>
+            </form>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
-            <!-- 左側/上方：新增留言表單 -->
-            <div class="lg:col-span-5">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 sticky top-24">
-                    <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                        <i class="fa-regular fa-pen-to-square text-brand-500"></i>
-                        撰寫新留言
-                    </h2>
-                    
-                    <form id="messageForm" onsubmit="handlePostMessage(event)" class="space-y-4">
-                        <div>
-                            <label for="authorName" class="block text-sm font-medium text-slate-700 mb-1">您的名字 / 暱稱 <span class="text-rose-500">*</span></label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                                    <i class="fa-regular fa-user"></i>
-                                </div>
-                                <input type="text" id="authorName" required placeholder="例如：小明" maxlength="25"
-                                    class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm transition">
-                            </div>
-                        </div>
-
-                        <div>
-                            <label for="messageContent" class="block text-sm font-medium text-slate-700 mb-1">留言內容 <span class="text-rose-500">*</span></label>
-                            <textarea id="messageContent" required rows="4" placeholder="在此輸入您想說的話..." maxlength="500"
-                                class="w-full p-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm transition resize-none"></textarea>
-                            <div class="text-right text-xs text-slate-400 mt-1">
-                                <span id="charCount">0</span>/500 字
-                            </div>
-                        </div>
-
-                        <button type="submit" 
-                            class="w-full bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-medium py-2.5 px-4 rounded-xl shadow-md shadow-brand-500/20 transition duration-200 flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-paper-plane text-xs"></i>
-                            發布留言
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- 右側/下方：留言清單與搜尋 -->
-            <div class="lg:col-span-7 space-y-4">
-                
-                <!-- 工具列：搜尋與排序 -->
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row gap-3 justify-between items-center">
-                    <div class="relative w-full sm:w-auto flex-grow max-w-md">
-                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                        <input type="text" id="searchInput" oninput="renderMessages()" placeholder="搜尋留言者或內容..." 
-                            class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
-                    </div>
-                    
-                    <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-                        <span class="text-xs text-slate-500 whitespace-nowrap">排序：</span>
-                        <select id="sortSelect" onchange="renderMessages()" class="bg-slate-50 border border-slate-200 text-xs rounded-lg px-3 py-2 text-slate-700 focus:outline-none focus:border-brand-500">
-                            <option value="newest">最新優先</option>
-                            <option value="oldest">最舊優先</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- 留言統計條 -->
-                <div class="flex justify-between items-center px-1">
-                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                        全部留言 (<span id="totalCount">0</span>)
-                    </span>
-                </div>
-
-                <!-- 留言列表容器 -->
-                <div id="messagesList" class="space-y-4">
-                    <!-- 留言會透過 JavaScript 動態渲染至此 -->
-                </div>
-
-                <!-- 空狀態提示 -->
-                <div id="emptyState" class="hidden bg-white rounded-2xl border border-slate-200 p-12 text-center">
-                    <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400 text-2xl">
-                        <i class="fa-regular fa-comment-dots"></i>
-                    </div>
-                    <h3 class="text-base font-semibold text-slate-800">尚無相關留言</h3>
-                    <p class="text-xs text-slate-500 mt-1">成為第一個留下訊息的人吧！</p>
-                </div>
-
-            </div>
-        </div>
-    </main>
-
-    <!-- 管理員登入 Modal 視窗 -->
-    <div id="adminModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 fade-in">
-        <div class="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-sm overflow-hidden">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
-                        <i class="fa-solid fa-lock text-brand-500"></i>
-                        管理員身份驗證
-                    </h3>
-                    <button onclick="toggleAdminModal()" class="text-slate-400 hover:text-slate-600 rounded-lg p-1">
-                        <i class="fa-solid fa-xmark text-lg"></i>
-                    </button>
-                </div>
-                <p class="text-xs text-slate-500 mb-4">請輸入管理員密碼以啟用刪除留言功能。（預設密碼：<code class="bg-slate-100 px-1 py-0.5 rounded text-brand-600 font-mono">admin123</code>）</p>
-                
-                <form id="adminForm" onsubmit="handleAdminLogin(event)" class="space-y-4">
-                    <div>
-                        <input type="password" id="adminPassword" required placeholder="請輸入密碼"
-                            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
-                        <p id="adminErrorMsg" class="text-rose-500 text-xs mt-1 hidden">密碼錯誤，請重新再試。</p>
-                    </div>
-                    
-                    <div class="flex justify-end gap-2">
-                        <button type="button" onclick="toggleAdminModal()" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">取消</button>
-                        <button type="submit" class="px-4 py-2 rounded-xl text-sm font-medium bg-brand-500 hover:bg-brand-600 text-white shadow-md shadow-brand-500/20 transition">登入管理員</button>
-                    </div>
-                </form>
+        <!-- 留言列表 -->
+        <div class="space-y-4">
+            <h2 class="text-xl font-semibold text-slate-800">大家的留言</h2>
+            <div id="messages-container" class="space-y-3">
+                <!-- 留言會透過 JavaScript 動態載入這裡 -->
+                <p class="text-slate-400 text-center py-4">載入中...</p>
             </div>
         </div>
     </div>
 
-    <!-- 刪除確認 Modal 視窗 -->
-    <div id="deleteModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 fade-in">
-        <div class="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-sm overflow-hidden p-6 text-center">
-            <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4 text-xl">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-            </div>
-            <h3 class="text-lg font-bold text-slate-900 mb-2">確認刪除留言？</h3>
-            <p class="text-xs text-slate-500 mb-6">此操作將永久移除該筆留言，無法復原。</p>
-            <div class="flex justify-center gap-3">
-                <button onclick="closeDeleteModal()" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition w-full">取消</button>
-                <button id="confirmDeleteBtn" class="px-4 py-2 rounded-xl text-sm font-medium bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-600/20 transition w-full">確認刪除</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 頁腳 -->
-    <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-400">
-        <p>© 2026 社群留言板 · 簡單·安全·即時</p>
-    </footer>
-
-    <!-- JavaScript 應用程式邏輯 -->
+    <!-- JavaScript 邏輯 -->
     <script>
-        // --- 狀態管理 ---
-        let messages = [];
-        let isAdmin = false;
-        let deleteTargetId = null;
+        // ⚠️ 請換成你在 SheetDB 取得的 API 網址
+        const API_URL = 'https://sheetdb.io/api/v1/mf1hi9bmb1xdu';
 
-        // 預設示範留言
-        const defaultMessages = [
-            {
-                id: '1',
-                author: '系統管理員',
-                content: '歡迎來到社群留言板！請大家踴躍發言，保持友善交流。',
-                timestamp: new Date(Date.now() - 86400000 * 2).toISOString(),
-                avatarBg: 'bg-indigo-500'
-            },
-            {
-                id: '2',
-                author: '陳小華',
-                content: '這個留言板介面好乾淨簡潔，操作起來非常滑順，讚讚！',
-                timestamp: new Date(Date.now() - 3600000 * 5).toISOString(),
-                avatarBg: 'bg-emerald-500'
-            },
-            {
-                id: '3',
-                author: 'Alex',
-                content: '請問管理員預設密碼是什麼呢？（提示：預設密碼是 admin123 喔！）',
-                timestamp: new Date(Date.now() - 1800000).toISOString(),
-                avatarBg: 'bg-amber-500'
-            }
-        ];
-
-        // 頭像背景顏色陣列
-        const avatarColors = [
-            'bg-slate-600', 'bg-red-500', 'bg-orange-500', 'bg-amber-500', 
-            'bg-emerald-500', 'bg-teal-500', 'bg-cyan-500', 'bg-blue-500', 
-            'bg-indigo-500', 'bg-violet-500', 'bg-purple-500', 'bg-pink-500'
-        ];
-
-        // --- 初始化 ---
-        window.onload = function() {
-            loadMessages();
-            setupCharCounter();
-        };
-
-        // 字數統計監聽
-        function setupCharCounter() {
-            const textarea = document.getElementById('messageContent');
-            const countDisplay = document.getElementById('charCount');
-            textarea.addEventListener('input', () => {
-                countDisplay.textContent = textarea.value.length;
-            });
-        }
-
-        // --- 載入與儲存數據 ---
-        function loadMessages() {
+        // 1. 網頁開啟時，自動讀取所有留言
+        async function fetchMessages() {
             try {
-                const stored = localStorage.getItem('app_guestbook_messages');
-                if (stored) {
-                    messages = JSON.parse(stored);
-                } else {
-                    messages = defaultMessages;
-                    saveMessages();
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                const container = document.getElementById('messages-container');
+                
+                if (data.length === 0) {
+                    container.innerHTML = `<p class="text-slate-400 text-center py-4">目前還沒有留言，快來搶頭香吧！</p>`;
+                    return;
                 }
-            } catch (e) {
-                console.error('LocalStorage 讀取失敗', e);
-                messages = defaultMessages;
-            }
-            renderMessages();
-        }
 
-        function saveMessages() {
-            try {
-                localStorage.setItem('app_guestbook_messages', JSON.stringify(messages));
-            } catch (e) {
-                console.error('LocalStorage 儲存失敗', e);
-            }
-        }
-
-        // --- 隨機頭像顏色產生器 ---
-        function getRandomAvatarColor(name) {
-            let hash = 0;
-            for (let i = 0; i < name.length; i++) {
-                hash = name.charCodeAt(i) + ((hash << 5) - hash);
-            }
-            const index = Math.abs(hash) % avatarColors.length;
-            return avatarColors[index];
-        }
-
-        // --- 渲染留言列表 ---
-        function renderMessages() {
-            const listEl = document.getElementById('messagesList');
-            const emptyEl = document.getElementById('emptyState');
-            const searchVal = document.getElementById('searchInput').value.trim().toLowerCase();
-            const sortVal = document.getElementById('sortSelect').value;
-
-            // 1. 過濾搜尋
-            let filtered = messages.filter(msg => 
-                msg.author.toLowerCase().includes(searchVal) || 
-                msg.content.toLowerCase().includes(searchVal)
-            );
-
-            // 2. 排序
-            filtered.sort((a, b) => {
-                const timeA = new Date(a.timestamp).getTime();
-                const timeB = new Date(b.timestamp).getTime();
-                return sortVal === 'newest' ? timeB - timeA : timeA - timeB;
-            });
-
-            // 更新計數
-            document.getElementById('totalCount').textContent = filtered.length;
-
-            // 3. 空狀態切換
-            if (filtered.length === 0) {
-                listEl.innerHTML = '';
-                emptyEl.classList.remove('hidden');
-                return;
-            } else {
-                emptyEl.classList.add('hidden');
-            }
-
-            // 4. 生成 HTML
-            listEl.innerHTML = filtered.map(msg => {
-                const avatarBg = msg.avatarBg || getRandomAvatarColor(msg.author);
-                const firstLetter = msg.author.charAt(0).toUpperCase();
-                const formattedTime = formatTimestamp(msg.timestamp);
-
-                return `
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm transition hover:shadow-md fade-in relative group">
-                        <div class="flex items-start justify-between gap-3">
-                            <div class="flex items-center gap-3">
-                                <!-- 頭像 -->
-                                <div class="w-10 h-10 rounded-xl ${avatarBg} text-white flex items-center justify-center font-bold text-base shadow-sm flex-shrink-0">
-                                    ${escapeHtml(firstLetter)}
-                                </div>
-                                <div>
-                                    <h3 class="font-bold text-slate-900 text-sm leading-snug">${escapeHtml(msg.author)}</h3>
-                                    <span class="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
-                                        <i class="fa-regular fa-clock"></i>
-                                        ${formattedTime}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <!-- 管理員刪除按鈕 -->
-                            ${isAdmin ? `
-                                <button onclick="openDeleteModal('${msg.id}')" 
-                                    class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1">
-                                    <i class="fa-regular fa-trash-can"></i>
-                                    刪除
-                                </button>
-                            ` : ''}
+                // 清空並反轉陣列（讓最新的留言顯示在最上方）
+                container.innerHTML = '';
+                data.reverse().forEach(row => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-white p-4 rounded-xl shadow-sm border border-slate-100 space-y-1';
+                    card.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold text-slate-800">${escapeHtml(row.name)}</span>
+                            <span class="text-xs text-slate-400">${escapeHtml(row.date || '')}</span>
                         </div>
-
-                        <!-- 留言內文 -->
-                        <div class="mt-3 pl-13 text-slate-700 text-sm whitespace-pre-line leading-relaxed">
-                            ${escapeHtml(msg.content)}
-                        </div>
-                    </div>
-                `;
-            }).join('');
+                        <p class="text-slate-600 text-sm whitespace-pre-wrap">${escapeHtml(row.message)}</p>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                console.error('讀取失敗:', error);
+                document.getElementById('messages-container').innerHTML = `<p class="text-red-400 text-center py-4">載入留言失敗，請稍後再試。</p>`;
+            }
         }
 
-        // --- 時間格式化 ---
-        function formatTimestamp(isoString) {
-            const date = new Date(isoString);
-            const now = new Date();
-            const diffMs = now - date;
-            const diffMin = Math.floor(diffMs / 60000);
-            const diffHour = Math.floor(diffMs / 3600000);
-            const diffDay = Math.floor(diffMs / 86400000);
+        // 2. 處理表單送出
+        async function postMessage(event) {
+            event.preventDefault(); // 防止頁面重新整理
 
-            if (diffMin < 1) return '剛剛';
-            if (diffMin < 60) return `${diffMin} 分鐘前`;
-            if (diffHour < 24) return `${diffHour} 小時前`;
-            if (diffDay < 7) return `${diffDay} 天前`;
+            const nameInput = document.getElementById('name');
+            const messageInput = document.getElementById('message');
+            const submitBtn = document.getElementById('submit-btn');
 
-            return date.toLocaleDateString('zh-TW', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        }
-
-        // --- XSS 防護 ---
-        function escapeHtml(str) {
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-
-        // --- 發布留言 ---
-        function handlePostMessage(e) {
-            e.preventDefault();
-
-            const authorInput = document.getElementById('authorName');
-            const contentInput = document.getElementById('messageContent');
-
-            const author = authorInput.value.trim();
-            const content = contentInput.value.trim();
-
-            if (!author || !content) return;
-
-            const newMessage = {
-                id: Date.now().toString(),
-                author: author,
-                content: content,
-                timestamp: new Date().toISOString(),
-                avatarBg: getRandomAvatarColor(author)
+            const newComment = {
+                name: nameInput.value,
+                message: messageInput.value,
+                date: new Date().toLocaleString() // 產生當前時間
             };
 
-            messages.unshift(newMessage);
-            saveMessages();
-            renderMessages();
+            submitBtn.disabled = true;
+            submitBtn.textContent = '傳送中...';
 
-            // 清空輸入框
-            contentInput.value = '';
-            document.getElementById('charCount').textContent = '0';
-        }
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ data: [newComment] })
+                });
 
-        // --- 管理員權限控制 ---
-        function toggleAdminModal() {
-            if (isAdmin) {
-                logoutAdmin();
-                return;
-            }
-            const modal = document.getElementById('adminModal');
-            const pwdInput = document.getElementById('adminPassword');
-            const errorMsg = document.getElementById('adminErrorMsg');
-            
-            pwdInput.value = '';
-            errorMsg.classList.add('hidden');
-            modal.classList.toggle('hidden');
-            if (!modal.classList.contains('hidden')) {
-                pwdInput.focus();
-            }
-        }
-
-        function handleAdminLogin(e) {
-            e.preventDefault();
-            const pwd = document.getElementById('adminPassword').value;
-            const errorMsg = document.getElementById('adminErrorMsg');
-
-            if (pwd === 'admin123') {
-                isAdmin = true;
-                updateAdminUI();
-                toggleAdminModal();
-            } else {
-                errorMsg.classList.remove('hidden');
+                if (response.ok) {
+                    nameInput.value = '';
+                    messageInput.value = '';
+                    fetchMessages(); // 重新整理留言列表
+                } else {
+                    alert('送出失敗，請稍後再試。');
+                }
+            } catch (error) {
+                console.error('送出錯誤:', error);
+                alert('發生錯誤，請檢查網路連線。');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '送出留言';
             }
         }
 
-        function logoutAdmin() {
-            isAdmin = false;
-            updateAdminUI();
+        // 簡單的安全防護（避免 HTML 標籤被惡意執行）
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;")
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;")
+                      .replace(/"/g, "&quot;")
+                      .replace(/'/g, "&#039;");
         }
 
-        function updateAdminUI() {
-            const btnText = document.getElementById('adminBtnText');
-            const btnIcon = document.getElementById('adminBtnIcon');
-            const adminBanner = document.getElementById('adminBanner');
-            const adminToggleBtn = document.getElementById('adminToggleBtn');
-
-            if (isAdmin) {
-                btnText.textContent = '退出管理員';
-                btnIcon.className = 'fa-solid fa-right-from-bracket text-amber-600';
-                adminToggleBtn.classList.add('border-amber-300', 'bg-amber-50');
-                adminBanner.classList.remove('hidden');
-            } else {
-                btnText.textContent = '管理員登入';
-                btnIcon.className = 'fa-solid fa-user-shield text-slate-500';
-                adminToggleBtn.classList.remove('border-amber-300', 'bg-amber-50');
-                adminBanner.classList.add('hidden');
-            }
-
-            renderMessages();
-        }
-
-        // --- 刪除留言功能 ---
-        function openDeleteModal(id) {
-            deleteTargetId = id;
-            document.getElementById('deleteModal').classList.remove('hidden');
-            document.getElementById('confirmDeleteBtn').onclick = executeDelete;
-        }
-
-        function closeDeleteModal() {
-            deleteTargetId = null;
-            document.getElementById('deleteModal').classList.add('hidden');
-        }
-
-        function executeDelete() {
-            if (!deleteTargetId) return;
-            messages = messages.filter(msg => msg.id !== deleteTargetId);
-            saveMessages();
-            renderMessages();
-            closeDeleteModal();
-        }
+        // 初始化執行
+        fetchMessages();
     </script>
 </body>
 </html>

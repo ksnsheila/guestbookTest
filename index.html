@@ -96,7 +96,20 @@
             const newComment = {
                 name: nameInput.value,
                 message: messageInput.value,
-                date: new Date().toLocaleString() // 產生當前時間
+                const now = new Date();
+                //記錄日期和時間
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0'); // 確保是兩位數
+                const day = String(now.getDate()).padStart(2, '0');
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}`;
+
+                const newComment = {
+                    name: nameInput.value,
+                    message: messageInput.value,
+                    date: formattedDate // 統一格式
+                }; // 產生當前時間
             };
 
             submitBtn.disabled = true;

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的雲端留言板(1)</title>
+    <title>我的雲端留言板</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -12,7 +12,7 @@
     <div class="max-w-xl mx-auto space-y-8">
         <!-- 標題 -->
         <div class="text-center">
-            <h1 class="text-3xl font-bold text-slate-800">💬 訪客留言板 (1)</h1>
+            <h1 class="text-3xl font-bold text-slate-800">💬 訪客留言板 (2)</h1>
             <p class="text-slate-500 mt-2">歡迎留下你的想法，無需登入！</p>
         </div>
 
@@ -97,21 +97,6 @@
                 name: nameInput.value,
                 message: messageInput.value,
                 date: new Date().toLocaleString() // 產生當前時間
-                cconst now = new Date();
-                cconst year = now.getFullYear();
-                cconst month = String(now.getMonth() + 1).padStart(2, '0'); // 確保是兩位數
-                cconst day = String(now.getDate()).padStart(2, '0');
-                const hours = String(now.getHours()).padStart(2, '0');
-                const minutes = String(now.getMinutes()).padStart(2, '0');
-
-                const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}`;
-                const newComment = {
-                   name: nameInput.value,
-                   message: messageInput.value,
-                   date: formattedDate // 統一格式
-                };
-
-
             };
 
             submitBtn.disabled = true;
